@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -19,13 +17,18 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 @Transactional
+@SuppressWarnings("unused")
 public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private ProductRepository productRepository;
 
+	
 	@Autowired
 	private RestTemplate restTemplate;
+
+	@Autowired
+	private InventoryServiceClient inventoryServiceClient;
 
 	@Override
 	public List<Product> findAllProducts() {
@@ -38,24 +41,34 @@ public class ProductServiceImpl implements ProductService {
 	public Optional<Product> findProductByCode(String code) {
 
 		Optional<Product> product = productRepository.findByCode(code);
-
-		if (product.isPresent()) {
-
-			log.info("Fetching inventory level for product_code: " + code);
-			ResponseEntity<ProductInventoryResponse> itemResponseEntity = restTemplate.getForEntity(
-					"http://inventory-service/api/inventory/{code}", ProductInventoryResponse.class, code);
-
-			if (itemResponseEntity.getStatusCode() == HttpStatus.OK) {
-
-				Integer quantity = itemResponseEntity.getBody().getAvailableQuantity();
-				log.info("Available quantity: " + quantity);
-
-				product.get().setInStock(quantity > 0);
-			} else {
-				log.error("Unable to get inventory level for product_code: " + code + ", StatusCode: "
-						+ itemResponseEntity.getStatusCode());
-			}
-		}
+		/*
+		 * 
+		 * if (product.isPresent()) {
+		 * 
+		 * log.info("Fetching inventory level for product_code: " + code);
+		 * ResponseEntity<ProductInventoryResponse> itemResponseEntity =
+		 * restTemplate.getForEntity( "http://inventory-service/api/inventory/{code}",
+		 * ProductInventoryResponse.class, code);
+		 * 
+		 * if (itemResponseEntity.getStatusCode() == HttpStatus.OK) {
+		 * 
+		 * Integer quantity = itemResponseEntity.getBody().getAvailableQuantity();
+		 * log.info("Available quantity: " + quantity);
+		 * 
+		 * product.get().setInStock(quantity > 0); } else {
+		 * log.error("Unable to get inventory level for product_code: " + code +
+		 * ", StatusCode: " + itemResponseEntity.getStatusCode()); } }
+		 * 
+		 */
+		
+		Optional<ProductInventoryResponse>  itemResponseEntity = inventoryServiceClient.getProductInvemtoryByCode(code);
+		
+		if(itemResponseEntity.isPresent()) {
+			
+			Integer quantity = itemResponseEntity.get().getAvailableQuantity();
+			product.get().setInStock(quantity > 0);
+		} 
+		
 		return product;
 	}
 
