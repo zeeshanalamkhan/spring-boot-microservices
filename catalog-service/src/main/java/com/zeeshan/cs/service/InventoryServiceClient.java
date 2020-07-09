@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import com.zeeshan.cs.web.ProductInventoryResponse;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,8 @@ public class InventoryServiceClient {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@HystrixCommand(commandKey = "inventory-by-productCOde", fallbackMethod = "getDefaultProductInventoryByCode")
+	@HystrixCommand(commandKey = "inventory-by-productCOde", fallbackMethod = "getDefaultProductInventoryByCode", commandProperties = {
+			@HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE") })
 	public Optional<ProductInventoryResponse> getProductInvemtoryByCode(String productCode) {
 
 		log.info("getProductInventoryByCode: " + productCode);
@@ -29,7 +31,7 @@ public class InventoryServiceClient {
 				"http://inventory-service/api/inventory/{code}", ProductInventoryResponse.class, productCode);
 
 		if (itemResponseEntity.getStatusCode() == HttpStatus.OK) {
-			
+
 			return Optional.ofNullable(itemResponseEntity.getBody());
 		} else {
 			log.error("Unable to get inventory level for product_code: " + productCode + ", StatusCode: "
