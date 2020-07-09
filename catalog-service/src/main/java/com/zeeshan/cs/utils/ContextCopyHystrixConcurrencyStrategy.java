@@ -21,7 +21,7 @@ public class ContextCopyHystrixConcurrencyStrategy extends HystrixConcurrencyStr
 	@Override
 	public <T> Callable<T> wrapCallable(Callable<T> callable) {
 
-		return new MyCallable(callable, MyThreadLocalsHolder.getCorrelationId());
+		return new MyCallable<T>(callable, MyThreadLocalsHolder.getCorrelationId());
 	}
 
 	public static class MyCallable<T> implements Callable<T> {
@@ -37,6 +37,7 @@ public class ContextCopyHystrixConcurrencyStrategy extends HystrixConcurrencyStr
 		@Override
 		public T call() throws Exception {
 
+			log.info("-----------call()------------------");
 			MyThreadLocalsHolder.setCorrelationId(correlationId);
 			try {
 				return actual.call();
