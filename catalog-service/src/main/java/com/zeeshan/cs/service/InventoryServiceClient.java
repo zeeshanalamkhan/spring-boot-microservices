@@ -3,12 +3,10 @@ package com.zeeshan.cs.service;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.zeeshan.cs.proxy.FeignInventoryServiceClient;
 import com.zeeshan.cs.web.ProductInventoryResponse;
 
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class InventoryServiceClient {
 
+	/*
+	 * @Autowired private RestTemplate restTemplate;
+	 */
+	
 	@Autowired
-	private RestTemplate restTemplate;
+	private FeignInventoryServiceClient feignClient;
 
 	/*
 	 * @HystrixCommand(commandKey = "inventory-by-productCOde", fallbackMethod =
@@ -27,20 +29,39 @@ public class InventoryServiceClient {
 	 * @HystrixProperty(name = "execution.isolation.strategy", value = "SEMAPHORE")
 	 * })
 	 */
+
+	/*
+	 * @HystrixCommand(commandKey = "inventory-by-productCOde", fallbackMethod =
+	 * "getDefaultProductInventoryByCode") public Optional<ProductInventoryResponse>
+	 * getProductInvemtoryByCode(String productCode) {
+	 * 
+	 * log.info("getProductInventoryByCode: " + productCode);
+	 * 
+	 * ResponseEntity<ProductInventoryResponse> itemResponseEntity =
+	 * restTemplate.getForEntity( "http://inventory-service/api/inventory/{code}",
+	 * ProductInventoryResponse.class, productCode);
+	 * 
+	 * if (itemResponseEntity.getStatusCode() == HttpStatus.OK) {
+	 * 
+	 * return Optional.ofNullable(itemResponseEntity.getBody()); } else {
+	 * log.error("Unable to get inventory level for product_code: " + productCode +
+	 * ", StatusCode: " + itemResponseEntity.getStatusCode()); return
+	 * Optional.empty(); } }
+	 * 
+	 */
+
 	@HystrixCommand(commandKey = "inventory-by-productCOde", fallbackMethod = "getDefaultProductInventoryByCode")
 	public Optional<ProductInventoryResponse> getProductInvemtoryByCode(String productCode) {
 
 		log.info("getProductInventoryByCode: " + productCode);
 
-		ResponseEntity<ProductInventoryResponse> itemResponseEntity = restTemplate.getForEntity(
-				"http://inventory-service/api/inventory/{code}", ProductInventoryResponse.class, productCode);
+		Optional<ProductInventoryResponse> itemResponseEntity = feignClient.getProductInvemtoryByCode(productCode);
 
-		if (itemResponseEntity.getStatusCode() == HttpStatus.OK) {
+		if (itemResponseEntity.isPresent()) {
 
-			return Optional.ofNullable(itemResponseEntity.getBody());
+			return itemResponseEntity;
 		} else {
-			log.error("Unable to get inventory level for product_code: " + productCode + ", StatusCode: "
-					+ itemResponseEntity.getStatusCode());
+			log.error("Unable to get inventory level for product_code: " + productCode);
 			return Optional.empty();
 		}
 	}
