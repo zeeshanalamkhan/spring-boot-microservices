@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.zeeshan.cs.entity.Product;
+import com.zeeshan.cs.proxy.FeignInventoryServiceClient;
 import com.zeeshan.cs.repository.ProductRepository;
 import com.zeeshan.cs.utils.MyThreadLocalsHolder;
 import com.zeeshan.cs.web.ProductInventoryResponse;
@@ -71,6 +72,11 @@ public class ProductServiceImpl implements ProductService {
 			log.info("Before CorrelationID: " + MyThreadLocalsHolder.getCorrelationId());
 
 			log.info("Fetching inventory level for product_code: " + code);
+
+			/*
+			 * Optional<ProductInventoryResponse> itemResponseEntity =
+			 * inventoryServiceClient .getProductInvemtoryByCode(code);
+			 */
 
 			Optional<ProductInventoryResponse> itemResponseEntity = inventoryServiceClient
 					.getProductInvemtoryByCode(code);
