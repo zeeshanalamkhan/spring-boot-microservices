@@ -1,5 +1,5 @@
 # spring-boot-microservices
-Code for Spring Miroservices
+Code for Spring Microservices
 
 Services: 
 	vault-server port: 8200
