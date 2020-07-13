@@ -27,7 +27,7 @@ public class ProductController {
 
 		return productService.findAllProducts();
 	}
-	
+
 	@GetMapping("/{code}")
 	public Product productByCode(@PathVariable String code) {
 		log.info("searching for prodcut with code: " + code);
